@@ -37,4 +37,46 @@ Finally, I am going to build the model class which has a list of layers, which c
 aliasing to conserve memory. My CNN model will be a particular instance of the model class with its layers structured
 in the standard way for image classifying CNNs.
 
+\section*{Mathematical details}
+I will not go into the details of backpropagation for the dense layers in
+my model, as I have already derived these things in my NameNet project and will
+instead focus on the Convolutional, Batch Norm, and Pooling layers of my model.
+
+\subsection*{Convolutions}
+The first layer in my archictecture takes in a batch of training examples
+$X^{(in)}$ which has dimensions $(n, c_{in}, d, d)$, assuming square input data. Where n is the size of the batch. 
+$c_{in}$ is the number of channels in the input data, and $d$ is the size of each training point. We then
+convolve this tensor with a kernel tensor $K$ of dimension $(c_{out}, c_{in}, k, k$, where $c_{out})$ is the number
+of points in the next layer and $K$ is the size of the kernel tensor. Now the Convolution operation on these tensors
+is defined by:
+\begin{align*}
+    (X^{(in)} * K)_{i,j,k,l} &= \sum_{r,s,t}X^{(in)}_{i,r,k + s, l + t}K_{r,s,t}
+\end{align*}
+This is frankly a bit of a mess and inefficient as its time complexity scales linearly in each
+argument of $X^{(in)}$ and $K$ getting out of hand quickly.
+
+
+Luckily there is a more efficient way to perform this operation, as we can see that $K$ slides
+along the each axis of $X$ acting as a sort of slighting window. Thus, we can
+first copy out the necessary part of $X$ then implement this operation as a matrix operation
+between the reshaped components. For this we will use a function provided
+by $NumPy$ to make a copy of $X$ and we will call this $X^{(col)}$, and if we let
+$p$ be the size of the output points we see that $X^{(col)}$ will have dimension
+$(n, c_{in}, p, p, k, k)$. So $X^{(col)}$ has all of the windows stored. Next we
+reorder the indices of $X^{(col)}$ with NumPy's transpose function to give it
+dimension $n, p, p, c_{in}, k, k$ then we reshape it to have dimension $(np^2, c_{in}k^2)$.
+Next we reshape K to dimension $(c_{out}, c_{in}k^2)$. Then we can calculate
+their convolution by taking:
+\begin{align*}
+    X^{(out)} = X^{(col)}K^T
+\end{align*}
+And if we reshape $X^{(out)}$ we can give it the dimension $n, c_{out}, p, p$.
+This implementation is orders of magnitude faster than the previous implementation.
+
+
+A note, often times these convolutions are done using strides, i.e. skipping certain windows when constructing
+$X^{(col)}$, this doesn't really change any derivations above or further down, only burdens notation.
+
+\subsection*{Convolution Gradient}
+
 \end{document}
