@@ -177,7 +177,85 @@ So it is clear that $g(Y, \gamma) = \hat{X}$ and so $g(L, \gamma) = \displaystyl
 Which, with NumPy would look like a sum across the first axis.
 
 
+Applying a similar logic to find $g(L, \hat{X})$:
+\begin{align*}
+    \frac{\partial Y_{ij}}{\partial \hat{X}_{kl}} = 
+    \begin{cases}
+        0 & (i,j) \neq (k, l) \\
+        \gamma_i & (i, j) = (k, l)\\
+    \end{cases}
+\end{align*}
+So that $g(L, \hat{X}) = \gamma \odot g(L, Y)$ where we will store $\gamma$
+as a $(c, 1)$ NumPy array to allow for broadcasting.
+
+
 We can figure out $g(L, \beta)$ from this by inspection as it is a constant term so
-$g(L, \beta) = \displaystyle \sum_{k = 1}^{np^2}g(L, Y)_{:k}$
+$g(L, \beta) = \displaystyle \sum_{k = 1}^{np^2}g(L, Y)_{:k}$.
+
+
+Finally, the most difficult part is to find $g(L, X)$, as $g(\hat{X}, X)$ is rather tricky to derive.
+First it is important to reason about these gradients channelwise as they act independently.
+So first consider for arbitrary channel $c$, $x := X_{c:}$ and $\hat{x} := \hat{X}_{c:}$. Then
+$\nu := \nu_c$ , $\sigma := \sigma_c$ and $\mu := \mu_c$. We have:
+\begin{align*}
+    \hat{x}_j = \frac{x_j - \mu}{\sigma}
+\end{align*} 
+First we find $\frac{\partial \mu}{\partial x_i}$. Recall:
+\begin{align*}
+    \mu &= \frac{1}{np^2}\sum_{k = 1}^{np^2}x_k \\
+    & \text{Taking the derivative with respect to $x_i$: } \\
+    \frac{\partial \mu}{\partial x_i} &= \frac{1}{np^2} \\
+\end{align*}
+Next we find $\frac{\partial \nu^2}{\partial x_i}$:
+\begin{align*}
+    \nu^2 &= \frac{1}{np^2}\sum_{k=1}^{np^2}(x_k - \mu)^2 \\
+    \nu^2 &= \frac{1}{np^2}\sum_{k=1}^{np^2}(x_k^2 - 2x_k\mu + \mu^2) \\
+\end{align*}
+Notice that:
+\begin{align*}
+    \frac{\partial x_k\mu}{x_i} &=
+    \begin{cases}
+        \frac{x_k}{np^2} & k \neq i \\
+        \frac{x_i}{np^2} + \mu & k = i \\
+    \end{cases}
+\end{align*}
+Thus, our derivative is:
+\begin{align*}
+    \frac{\partial \nu^2}{\partial x_i} &= \frac{1}{np^2}(2x_i -2\mu - \frac{2}{np^2}\sum_{k}^{np^2}x_k + \sum_{k}^{np^2}\frac{2\mu}{np^2}) \\
+    &= \frac{2}{np^2}(x_i - \mu)
+\end{align*}
+Now we can find $\frac{\partial \hat{x_j}}{\partial x_i}$:
+\begin{align*}
+    \frac{\partial \hat{x_j}}{\partial x_i} &= \frac{\partial \frac{x_j - \mu}{\sigma}}{\partial x_i} \\
+    &= \frac{\frac{\partial x_j - \mu}{\partial x_i}\sigma - (x_j - \mu)\frac{\partial \sigma}{\partial x_i}}{\sigma^2} \\
+    &= \frac{(\delta_{ij} - \frac{1}{np^2})\sigma - (x_j - \mu)(\frac{\frac{2}{np^2}(x_i - \mu)}{2\sigma})}{\sigma^2} \\
+    &= \frac{1}{\sigma}(\delta_{ij} - \frac{1}{np^2} - \frac{1}{np^2}(\frac{x_i - \mu}{\sigma})(\frac{x_j - \mu}{\sigma})) \\
+    &= \frac{1}{\sigma}(\delta_{ij} - \frac{1}{np^2} - \frac{\hat{x_i}\hat{x_j}}{np^2})
+\end{align*}
+Now using combining this with $g(L, \hat{x})$ we have:
+\begin{align*}
+    \frac{\partial L}{\partial x_i} &= \sum_{j = 1}^{np^2} \frac{\partial L}{\partial \hat{x_j}} \frac{\partial \hat{x_j}}{x_i} \\
+    &= \sum_{j = 1}^{np^2} \frac{\partial L}{\partial \hat{x_j}} \Big(\frac{1}{\sigma}(\delta_{ij} - \frac{1}{np^2} - \frac{\hat{x_i}\hat{x_j}}{np^2})\Big) \\
+    &= \frac{1}{\sigma np^2} \sum_{j = 1}^{np^2} \frac{\partial L}{\partial \hat{x_j}} \Big(\delta_{ij}np^2 - 1 - \hat{x_i}\hat{x_j}) \\
+    &= \frac{1}{\sigma}\Big(\frac{\partial L}{\partial \hat{x_i}}- \frac{1}{np^2}\sum_{j = 1}^{np^2} \frac{\partial L}{\partial \hat{x_j}} - \frac{\hat{x_i}}{np^2}\sum_{j = 1}^{np^2} \frac{\partial L}{\partial \hat{x_j}}\hat{x_j}\Big).
+\end{align*}
+With this we can now find the gradient for the entire channel by stacking
+these contributions:
+\begin{align*}
+    g(L, X)_c = \frac{1}{\sigma_c np^2}\Big(np^2g(L, \hat{X})_c - \sum_{j}g(L, \hat{X})_{cj} - \hat{X_c}\sum_{j}(g(L, \hat{X}) \odot \hat{X})_{cj}\Big) \\
+\end{align*}
+So:
+\begin{align*}
+    g(L, X) = \frac{1}{\sigma np^2}\Big(np^2g(L, \hat{X}) - \sum_{j}g(L, \hat{X})_{:j} - \hat{X_c}\sum_{j}(g(L, \hat{X}) \odot \hat{X})_{:j}\Big) \\
+\end{align*}
+With careful broadcasting and row wise summing, this can be done quickly in code.
+
+\subsection*{Pooling}
+The final step of the convolution layer (there is an activation layer after the batch norm, but I will
+omit the calculations as they are trivial) is the pooling layer. I will use max pooling,
+but regardless of the method used this is a way to compress the size of the previous layer. Max pooling
+takes a kernel and outputs the effect of sliding this kernel window along each of the input points
+by constructing an array with the maximum value found in that kernel. In the backward pass, we only route
+the gradient to the max kernel values and the others get 0.
 
 \end{document}
