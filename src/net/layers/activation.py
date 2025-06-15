@@ -41,4 +41,4 @@ class Activation(Layer):
         """
         This layer has no parameters
         """
-        return None
+        return []
