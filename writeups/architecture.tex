@@ -60,17 +60,17 @@ Luckily there is a more efficient way to perform this operation, as we can see t
 along the each axis of $X$ acting as a sort of slighting window. Thus, we can
 first copy out the necessary part of $X$ then implement this operation as a matrix operation
 between the reshaped components. For this we will use a function provided
-by $NumPy$ to make a copy of $X$ and we will call this $X^{(col)}$, and if we let
+by NumPy to make a copy of $X$ and we will call this $X^{(col)}$, and if we let
 $p$ be the size of the output points we see that $X^{(col)}$ will have dimension
 $(n, c_{in}, p, p, k, k)$. So $X^{(col)}$ has all of the windows stored. Next we
 reorder the indices of $X^{(col)}$ with NumPy's transpose function to give it
-dimension $n, p, p, c_{in}, k, k$ then we reshape it to have dimension $(np^2, c_{in}k^2)$.
+dimension $(c_{in}, k, k, n, p, p)$ then we reshape it to have dimension $(c_{in}k^2, np^2)$.
 Next we reshape K to dimension $(c_{out}, c_{in}k^2)$. Then we can calculate
 their convolution by taking:
 \begin{align*}
-    X^{(out)} = X^{(col)}K^T
+    X^{(out)} = K(X^{(col)})
 \end{align*}
-And if we reshape $X^{(out)}$ we can give it the dimension $n, c_{out}, p, p$.
+which is of dimension $(c_{out}, np^2)$. If we reshape $X^{(out)}$ we can give it the dimension $(n, c_{out}, p, p)$.
 This implementation is orders of magnitude faster than the previous implementation.
 
 
@@ -78,5 +78,34 @@ A note, often times these convolutions are done using strides, i.e. skipping cer
 $X^{(col)}$, this doesn't really change any derivations above or further down, only burdens notation.
 
 \subsection*{Convolution Gradient}
+The most convenient way to reason about the convolution gradient is to consider
+the operation in its matrix form as outlined above, without $X^{(out)}$. Now, consider our setup earlier with
+$X^{(out)} = X^{(col)}K^T $. Then:
+\begin{align*}
+    X^{(out)}_{ij} &= \sum_{p = 0}^{c_nk^2}K_{ip}X^{(col)}_{pj}
+\end{align*}
+Then:
+\begin{align*}
+    \frac{\partial  X^{(out)}_{ij}}{\partial K_{kl}} = 
+    \begin{cases}
+        0 & i \neq k \\
+        X^{(col)}_{lj} & i = k
+    \end{cases}
+\end{align*}
+Since this information does not depend on $i$ or $k$ at all, the entire
+derivative information of $X^{(out)}$ with respect to $K$, which we will denote
+by $g(X^{(out)}, K) = (X^{col})^T$ which has dimension $(c_{in}k^2, np^2)$
+Then if we are given $g(L, X^{(out)})$ which can be shaped as $(c_{out}, np^2)$.
+Then it is clear that:
+\begin{align*}
+    g(L, K) = g(L, X^{(out)})g(X^{(out)}, K)^T
+\end{align*}
+We can verify that this makes sense by considering each entry:
+\begin{align*}
+    g(L, K)_{ij} &= \sum_{k = 0}^{np^2}g(L, X^{(out)})_{ik}g(X^{(out)}, K)_{jk} \\
+    &\text{As this gradient information for $X^{(out)}$ with respect to K is shared across each column:} \\
+    &= \sum_{k = 0}^{np^2}\frac{\partial L}{\partial X^{(out)}_{ik}} \frac{X^{(out)}_{ik}}{K_{ij}}
+\end{align*}
+Which is exactly what we want.
 
 \end{document}
