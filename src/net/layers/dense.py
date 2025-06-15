@@ -21,7 +21,7 @@ class Dense(Layer):
         """
         super().__init__()
         self.weights = Tensor(np.random.randn(out, inp) * np.sqrt(2 / inp))
-        self.biases = Tensor(np.zeros(1, out)) # For broadcasting
+        self.biases = Tensor(np.zeros((1, out))) # For broadcasting
 
     def forward(self, inp: Tensor) -> None:
         """
@@ -31,7 +31,7 @@ class Dense(Layer):
             inp.reshape((1, -1)) # May not need this??
 
         self.inp = inp
-        self.out = Tensor(inp @ self.weights.value + self.biases.value)
+        self.out = Tensor(inp.value @ self.weights.value.T + self.biases.value)
 
     def backward(self) -> None:
         """
