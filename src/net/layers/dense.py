@@ -38,7 +38,7 @@ class Dense(Layer):
         Backward pass for a dense layer, assuming out has already been backpropagated through
         """
         self.weights.grad = self.out.grad.T @ self.inp.value # Implicit sum across batch
-        self.biases.grad = np.sum(self.out.grad, axis=0) # Explicit sum
+        self.biases.grad = np.sum(self.out.grad, axis=0, keepdims=True) # Explicit sum
         self.inp.grad = self.out.grad @ self.weights.value
 
     def parameters(self):

@@ -1,6 +1,6 @@
 """
 Test the dense layer class
---- Test was written by Chat GPT
+--- Test was written by Chat GPT ---
 """
 
 import numpy as np

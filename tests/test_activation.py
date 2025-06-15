@@ -1,6 +1,6 @@
 """
 Test the activation layer class
---- Test was written by Chat GPT
+--- Test was written by Chat GPT ---
 """
 
 

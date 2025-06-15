@@ -44,3 +44,11 @@ class Tensor():
 
         self.value = self.value.reshape(shape)
         self.grad = self.grad.reshape(shape)
+
+    def flatten(self):
+        """
+        Flatten tensor
+        """
+        new = Tensor(self.value.flatten())
+        new.grad = self.grad.flatten()
+        return new
