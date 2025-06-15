@@ -82,7 +82,7 @@ The most convenient way to reason about the convolution gradient is to consider
 the operation in its matrix form as outlined above, without $X^{(out)}$. Now, consider our setup earlier with
 $X^{(out)} = X^{(col)}K^T $. Then:
 \begin{align*}
-    X^{(out)}_{ij} &= \sum_{p = 0}^{c_nk^2}K_{ip}X^{(col)}_{pj}
+    X^{(out)}_{ij} &= \sum_{p = 1}^{c_nk^2}K_{ip}X^{(col)}_{pj}
 \end{align*}
 Then:
 \begin{align*}
@@ -94,18 +94,54 @@ Then:
 \end{align*}
 Since this information does not depend on $i$ or $k$ at all, the entire
 derivative information of $X^{(out)}$ with respect to $K$, which we will denote
-by $g(X^{(out)}, K) = (X^{col})^T$ which has dimension $(c_{in}k^2, np^2)$
+by $g(X^{(out)}, K) = (X^{col})$ which has dimension $(c_{in}k^2, np^2)$
 Then if we are given $g(L, X^{(out)})$ which can be shaped as $(c_{out}, np^2)$.
 Then it is clear that:
 \begin{align*}
-    g(L, K) = g(L, X^{(out)})g(X^{(out)}, K)^T
+    g(L, K) &= g(L, X^{(out)})g(X^{(out)}, K)^T \\
+    &=  g(L, X^{(out)})(X^{(col)})^T
 \end{align*}
 We can verify that this makes sense by considering each entry:
 \begin{align*}
-    g(L, K)_{ij} &= \sum_{k = 0}^{np^2}g(L, X^{(out)})_{ik}g(X^{(out)}, K)_{jk} \\
+    g(L, K)_{ij} &= \sum_{k = 1}^{np^2}g(L, X^{(out)})_{ik}g(X^{(out)}, K)_{jk} \\
     &\text{As this gradient information for $X^{(out)}$ with respect to K is shared across each column:} \\
     &= \sum_{k = 0}^{np^2}\frac{\partial L}{\partial X^{(out)}_{ik}} \frac{X^{(out)}_{ik}}{K_{ij}}
 \end{align*}
 Which is exactly what we want.
+
+
+
+Next we look to find the gradient of the loss with respect to the input layer $X^{(in)}$.
+However our computations input $X^{(col)}$ and in fact it is easier to compute the gradient
+with respect to $X^{(col)}$ then use a sort of inverse function the sliding window function
+used to produce $X^{(col)}$ (a function easy to implement) to get the desired gradient.
+So consider again:
+\begin{align*}
+    X^{(out)}_{ij} &= \sum_{p = 1}^{c_nk^2}K_{ip}X^{(col)}_{pj}
+\end{align*}
+Then:
+\begin{align*}
+    \frac{\partial  X^{(out)}_{ij}}{\partial X^{(col)}_{kl}} = 
+    \begin{cases}
+        0 & j \neq l \\
+        K_{ik} & j = l
+    \end{cases}
+\end{align*}
+Again noticing that this derivative does not depend on $j$ or $l$ whatsoever,
+we can package the partial derivatives within $g(X^{(out)}, X^{(col)}) = K$.
+Then if we have $g(L, X^{(out)})$ with dimension $(c_{out}, np^2)$, we find:
+\begin{align*}
+    g(L, X^{(col)}) &=  g(X^{(out)}, K)^Tg(L, X^{(out)}) \\
+    &= K^Tg(L, X^{(out)})
+\end{align*}
+To verify this:
+\begin{align*}
+    g(L, X^{(col)})_{ij} &= \sum_{k = 1}^{c_{out}}K_{ki}g(L, X^{(out)})_{kj} \\
+    &\text{As this gradient information for $X^{(out)}$ with respect to $X^{(col)}$ is shared across each row:} \\
+    &= \sum_{k = 0}^{c_{out}}\frac{\partial X^{(out)}_{kj}}{\partial X^{(col)}_{ij}}\frac{\partial L}{\partial X^{(out)}_{kj}}\\
+\end{align*}
+As required.
+
+\subsection*{Batch Normalization}
 
 \end{document}
