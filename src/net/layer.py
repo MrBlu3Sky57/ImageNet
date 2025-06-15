@@ -2,7 +2,6 @@
 The file containing the Layer class
 """
 
-import numpy as np
 from net.tensor import Tensor
 
 class Layer:
@@ -13,18 +12,24 @@ class Layer:
     inp: Tensor
     out: Tensor
 
-    def __init__(self, inp: np.ndarray):
-        self.inp = Tensor(inp)
+    def __init__(self):
+        self.inp = Tensor(None)
         self.out = Tensor(None)
 
-    def forward(self):
+    def forward(self, inp: Tensor) -> None:
         """
         A method representing the forward pass through a layer
         """
         raise NotImplementedError
 
-    def backward(self):
+    def backward(self) -> None:
         """
         A method representing the backward pass through a layer
+        """
+        raise NotImplementedError
+
+    def parameters(self) -> list[Tensor]:
+        """
+        A method that returns the layer's parameters as a list of Tensors
         """
         raise NotImplementedError

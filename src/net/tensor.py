@@ -12,12 +12,15 @@ class Tensor():
     """
     value: np.ndarray
     grad: np.ndarray
+    shape: tuple[int]
 
     def __init__(self, value: np.ndarray):
         if value is not None:
+            self.shape = value.shape
             self.value = value
             self.grad = np.zeros(value.shape)
         else:
+            self.shape = None
             self.value = None
             self.grad = None
 
@@ -33,3 +36,11 @@ class Tensor():
         rate
         """
         self.value -= lr * self.grad
+
+    def reshape(self, shape: tuple[int]) -> None:
+        """
+        Reshape tensor to given shape
+        """
+
+        self.value = self.value.reshape(shape)
+        self.grad = self.grad.reshape(shape)
