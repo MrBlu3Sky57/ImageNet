@@ -143,5 +143,41 @@ To verify this:
 As required.
 
 \subsection*{Batch Normalization}
+Before the output of the convolution layer is put through the Activation
+layer, we are going to apply batch normalization. This consists of two stages,
+but they will be part of the layer. Doing some relabeling, say the output of the convolution layer
+is $X$ of dimension $(c, np^2)$. Then we first produce $\hat{X}$ by normalizing
+$X$ across each channel. More specifically, let $\mu$ be the mean across each channel and
+let $\nu$ be the variance per channel then we let $\sigma = \sqrt{\epsilon + \nu^2}$ and
+\begin{align*}
+    \hat{X} = \frac{X - \mu}{\sigma}
+\end{align*}
+The epsilon being included to avoid the undefined derivative of the square root function
+at 0.
+
+
+Now the second step of the batch norm is to reparametrize the normalized output
+with a learnable mean $\beta$ and standard deviation $\gamma$, specifically:
+\begin{align*}
+    Y = \gamma \hat{X} + \beta
+\end{align*}
+Where $Y$ is the output of the layer.
+
+
+Now for our gradients, if we are given $g(L, Y)$ of dimension $(c, np^2)$, it is simple to find
+$g(L, \gamma)$ and $g(L, \beta)$. First consider:
+\begin{align*}
+    \frac{\partial Y_{ij}}{\partial \gamma_k} = 
+    \begin{cases}
+        0 & i \neq k \\
+        \hat{X}_{ij} & i = k \\
+    \end{cases}
+\end{align*}
+So it is clear that $g(Y, \gamma) = \hat{X}$ and so $g(L, \gamma) = \displaystyle \sum_{k = 1}^{np^2} \Big(g(L, Y) \odot g(Y, \gamma)\Big)_{:k}$.
+Which, with NumPy would look like a sum across the first axis.
+
+
+We can figure out $g(L, \beta)$ from this by inspection as it is a constant term so
+$g(L, \beta) = \displaystyle \sum_{k = 1}^{np^2}g(L, Y)_{:k}$
 
 \end{document}
