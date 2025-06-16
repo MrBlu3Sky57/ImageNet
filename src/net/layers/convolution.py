@@ -47,10 +47,8 @@ class Convolutional(Layer):
         out_unshaped = self.kernel.value @ view
 
         # Unbind dimensions of output
-        out_val = out_unshaped.reshape(shape=(inp.shape[0], self.kernel.shape[0], out_h, out_w))
-
-        # Set out attribute once indices are correctly transposed
-        self.out = Tensor(np.transpose(out_val, shape=(3, 0, 1, 2)))
+        self.out = Tensor(np.reshape(out_unshaped,
+                                     shape=(inp.shape[0], self.kernel.shape[0], out_h, out_w)))
 
     def backward(self) -> None:
         """
