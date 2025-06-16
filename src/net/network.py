@@ -10,13 +10,17 @@ class Network:
     """
     Class representing a neural network
     """
-    layers = list[Layer]
+    layers: list[Layer]
+    training: bool
 
-    def __init__(self, layers):
+    def __init__(self, layers: list[Layer], training: bool = True):
         """ Requires layers to be inputted
         in sequential order, with correct dimensions
         """
         self.layers = layers
+        self.training = training
+        for layer in layers:
+            layer.training = training
 
     def forward(self, inp: np.ndarray) -> Tensor:
         """ Forward pass through the network"""
@@ -44,3 +48,11 @@ class Network:
         for layer in self.layers:
             params.extend(layer.parameters())
         return params
+    
+    def set_to_predict(self) -> None:
+        """
+        Set model to prediction mode
+        """
+        self.training = False
+        for layer in self.layers:
+            layer.training = False

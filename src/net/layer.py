@@ -11,10 +11,12 @@ class Layer:
 
     inp: Tensor
     out: Tensor
+    training: bool
 
-    def __init__(self):
+    def __init__(self, training: bool = True):
         self.inp = Tensor(None)
         self.out = Tensor(None)
+        self.training = training
 
     def forward(self, inp: Tensor) -> None:
         """

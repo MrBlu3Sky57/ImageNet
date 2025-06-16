@@ -12,6 +12,7 @@ class Convolutional(Layer):
     A class representing a convolutional layer in a neural network
     """
     kernel: Tensor
+    bias: Tensor
     strides: int
     padding: int
     cols: np.ndarray
@@ -20,6 +21,7 @@ class Convolutional(Layer):
     def __init__(self, kernel: Tensor, strides: int = 1, padding: int = 1):
         super().__init__()
         self.kernel = kernel
+        self.bias = Tensor(np.zeros((kernel.shape[0], 1)))
         self.kernel.reshape((kernel.shape[0], -1)) # For fast convolutions
         self.strides = strides
         self.padding = padding
@@ -45,6 +47,7 @@ class Convolutional(Layer):
 
         # Unshaped output
         out_unshaped = self.kernel.value @ view
+        out_unshaped += self.bias.value
 
         # Unbind dimensions of output
         self.out = Tensor(np.reshape(out_unshaped,
@@ -59,6 +62,7 @@ class Convolutional(Layer):
 
         # Reshape out grad
         out_grad = np.reshape(out_grad, (out_grad.shape[0], -1))
+        self.bias.grad = np.sum(out_grad, axis=1, keepdims=True)
 
         # Get kernel gradient
         self.kernel.grad = out_grad @ self.cols.T
@@ -83,4 +87,4 @@ class Convolutional(Layer):
         """
         Return a singleton list containing a kernel
         """
-        return [self.kernel]
+        return [self.kernel, self.bias]

@@ -246,7 +246,7 @@ these contributions:
 \end{align*}
 So:
 \begin{align*}
-    g(L, X) = \frac{1}{\sigma np^2}\Big(np^2g(L, \hat{X}) - \sum_{j}g(L, \hat{X})_{:j} - \hat{X_c}\sum_{j}(g(L, \hat{X}) \odot \hat{X})_{:j}\Big) \\
+    g(L, X) = \frac{1}{\sigma np^2}\Big(np^2g(L, \hat{X}) - \sum_{j}g(L, \hat{X})_{:j} - \hat{X}\sum_{j}(g(L, \hat{X}) \odot \hat{X})_{:j}\Big) \\
 \end{align*}
 With careful broadcasting and row wise summing, this can be done quickly in code.
 
