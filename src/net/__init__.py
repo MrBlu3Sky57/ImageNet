@@ -6,4 +6,5 @@ from .tensor import Tensor
 from .layer import Layer
 from .layers import *
 
-__all__ = ["Tensor", "Layer", "Dense", "Activation", "Convolutional", "Flatten", "BatchNorm"]
+__all__ = ["Tensor", "Layer", "Dense", "Activation",
+           "Convolutional", "Flatten", "BatchNorm", "Pool"]

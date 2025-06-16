@@ -22,7 +22,6 @@ class Convolutional(Layer):
         super().__init__()
         self.kernel = kernel
         self.bias = Tensor(np.zeros((kernel.shape[0], 1)))
-        self.kernel.reshape((kernel.shape[0], -1)) # For fast convolutions
         self.strides = strides
         self.padding = padding
 
@@ -45,13 +44,16 @@ class Convolutional(Layer):
         self.cols = view
         self.out_shape = (out_h, out_w)
 
+        kernel = self.kernel.value.reshape(self.kernel.shape[0], -1) # For fast convolutions
+
         # Unshaped output
-        out_unshaped = self.kernel.value @ view
+        out_unshaped = kernel @ view
         out_unshaped += self.bias.value
 
         # Unbind dimensions of output
-        self.out = Tensor(np.reshape(out_unshaped,
-                                     shape=(inp.shape[0], self.kernel.shape[0], out_h, out_w)))
+        out_shaped = np.reshape(out_unshaped,
+            shape=(self.kernel.shape[0], inp.shape[0], out_h, out_w)).transpose(1, 0, 2, 3)
+        self.out = Tensor(out_shaped)
 
     def backward(self) -> None:
         """
@@ -65,10 +67,13 @@ class Convolutional(Layer):
         self.bias.grad = np.sum(out_grad, axis=1, keepdims=True)
 
         # Get kernel gradient
-        self.kernel.grad = out_grad @ self.cols.T
+        self.kernel.grad = (out_grad @ self.cols.T).reshape(self.kernel.shape)
+
+        # or next computation
+        kernel = self.kernel.value.reshape(self.kernel.shape[0], -1)
 
         # First get column gradient then turn to im shape
-        col_grad = self.kernel.value.T @ out_grad
+        col_grad = kernel.T @ out_grad
 
         # Get kernel size
         kh, kw = self.kernel.shape_hint[2], self.kernel.shape_hint[3]

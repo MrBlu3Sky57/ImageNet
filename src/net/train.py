@@ -27,7 +27,9 @@ def grad_descent(model: Network, loss: callable, xs: np.ndarray, ys: np.ndarray,
 
         # Run backward pass
         model.backward()
-
+        
         for p in model.parameters():
             clip_grad(p, 5.0)
             p.increment(lr)
+        
+
