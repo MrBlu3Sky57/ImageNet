@@ -13,13 +13,16 @@ class Tensor():
     value: np.ndarray
     grad: np.ndarray
     shape: tuple[int]
+    shape_hint: tuple[int]
 
-    def __init__(self, value: np.ndarray):
+    def __init__(self, value: np.ndarray, shape_hint: tuple = None):
         if value is not None:
+            self.shape_hint = shape_hint or value.shape
             self.shape = value.shape
             self.value = value
-            self.grad = np.zeros(value.shape)
+            self.grad = np.zeros_like(value)
         else:
+            self.shape_hint = None
             self.shape = None
             self.value = None
             self.grad = None
@@ -44,6 +47,7 @@ class Tensor():
 
         self.value = self.value.reshape(shape)
         self.grad = self.grad.reshape(shape)
+        self.shape = shape
 
     def flatten(self):
         """
@@ -52,3 +56,9 @@ class Tensor():
         new = Tensor(self.value.flatten())
         new.grad = self.grad.flatten()
         return new
+
+    def restore_shape(self) -> None:
+        """
+        Restore shape to shape hint
+        """
+        self.reshape(self.shape_hint)
