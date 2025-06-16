@@ -19,6 +19,18 @@ def d_relu(x: Tensor):
     """
     return (x.value > 0).astype(float)
 
+def tanh(x: Tensor):
+    """
+    Tanh function
+    """
+    return Tensor(np.tanh(x.value))
+
+def dtanh(x: Tensor):
+    """
+    Tanh derivative
+    """
+    return 1 - np.tanh(x.value) ** 2
+
 def im2col(inp: np.ndarray, kernel_size: tuple[int, int], stride: int = 1,
            padding: int = 0) -> tuple:
     """
@@ -91,8 +103,8 @@ def cross_entropy(logits: np.ndarray, targets: np.ndarray, grad: bool = True) ->
     loss = np.mean(-np.log(probs[np.arange(n), targets]))
 
     if grad:
-        grad = probs
-        grad[np.arange(n)] -= 1
+        grad = np.copy(probs)
+        grad[np.arange(n), targets] -= 1 # softmax - y_onehot
         grad /= n
 
         return loss, grad

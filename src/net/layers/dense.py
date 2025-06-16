@@ -20,7 +20,7 @@ class Dense(Layer):
         Initialize a dense layer which of given dimensions
         """
         super().__init__()
-        self.weights = Tensor(np.random.randn(out, inp) * np.sqrt(2 / inp))
+        self.weights = Tensor(np.random.randn(out, inp) * np.sqrt(2.0 / inp))
         self.biases = Tensor(np.zeros((1, out))) # For broadcasting
 
     def forward(self, inp: Tensor) -> None:
@@ -28,7 +28,7 @@ class Dense(Layer):
         Forward pass for a dense layer
         """
         if len(inp.shape) == 1:
-            inp.reshape((1, -1)) # May not need this??
+            inp.reshape((1, inp.shape[0])) # May not need this??
 
         self.inp = inp
         self.out = Tensor(inp.value @ self.weights.value.T + self.biases.value)

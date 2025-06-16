@@ -22,7 +22,7 @@ class Network:
         """ Forward pass through the network"""
 
         if len(inp.shape) == 1:
-            inp = inp.reshape(1, -1)
+            inp = inp.reshape(1, inp.shape[0])
         tensor_inp = Tensor(inp)
         for layer in self.layers:
             layer.forward(tensor_inp)

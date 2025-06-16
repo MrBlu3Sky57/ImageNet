@@ -49,6 +49,14 @@ class Tensor():
         self.grad = self.grad.reshape(shape)
         self.shape = shape
 
+    def reshape_(self, shape: tuple[int]):
+        """
+        Reshape tensor to given shape and return a new one
+        """
+        new = Tensor(self.value.reshape(shape))
+        new.grad = self.grad.reshape(shape)
+        return new
+
     def flatten(self):
         """
         Flatten tensor
