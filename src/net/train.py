@@ -32,6 +32,9 @@ def grad_descent(model: Network, loss: callable, xs: np.ndarray, ys: np.ndarray,
             clip_grad(p, 5.0)
             p.increment(lr)
         
+        if step == steps // 2:
+            lr *= 0.1
+
         if step % 100 == 0:
             print(f"Loss at Step: {step + 1}: {loss_val}")
             # logits = model.forward(x_batch).value
