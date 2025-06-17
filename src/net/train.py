@@ -27,9 +27,16 @@ def grad_descent(model: Network, loss: callable, xs: np.ndarray, ys: np.ndarray,
 
         # Run backward pass
         model.backward()
-        
+
         for p in model.parameters():
             clip_grad(p, 5.0)
             p.increment(lr)
         
+        if step % 100 == 0:
+            print(f"Loss at Step: {step + 1}: {loss_val}")
+            # logits = model.forward(x_batch).value
+            # print("Logits sample:\n", logits[:5])
+            # print("Predictions:\n", np.argmax(logits[:5], axis=1))
+
+
 

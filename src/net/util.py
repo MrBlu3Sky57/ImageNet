@@ -97,8 +97,12 @@ def cross_entropy(logits: np.ndarray, targets: np.ndarray, grad: bool = True) ->
     """
     logits = logits - np.max(logits, axis=1, keepdims=True)
     exp_logits = np.exp(logits)
-    probs = exp_logits / np.sum(exp_logits, axis=1, keepdims=True)
+    probs = exp_logits / np.sum(exp_logits, axis=1, keepdims=True) 
 
+    # Clip probabilities to avoid log(0)
+    eps = 1e-12
+    probs = np.clip(probs, eps, 1. - eps)
+    
     n = logits.shape[0]
     loss = np.mean(-np.log(probs[np.arange(n), targets]))
 

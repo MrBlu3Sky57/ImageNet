@@ -15,7 +15,7 @@ class Pool(Layer):
     stride: int
     mask: np.ndarray
 
-    def __init__(self, size: int, stride: int):
+    def __init__(self, size: int, stride: int=1):
         super().__init__()
         self.size = size
         self.stride = stride
